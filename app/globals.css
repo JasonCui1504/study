@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/* Palette and type from the photography site (jascui.com). */
+:root {
+  --canvas: #0d1110;
+  --surface: #141c17;
+  --lift: #1c2820;
+  --line: #243028;
+  --accent: #4a7c59;
+  --accent-dim: #2d4a3e;
+  --prose: #deeade;
+  --subtle: #b0c8b8;
+  --faint: #8aa498;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-lift: var(--lift);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-prose: var(--prose);
+  --color-subtle: var(--subtle);
+  --color-faint: var(--faint);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--prose);
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.45s ease-out both;
+}
+
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 124, 89, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(74, 124, 89, 0); }
+}
+.live-dot {
+  animation: live-pulse 1.6s ease-out infinite;
+}
+
+/* Flashcard content (lib/markup.ts) */
+.card-body {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.card-body strong { color: var(--prose); font-weight: 600; }
+.card-body code {
+  font-family: var(--font-geist-mono);
+  font-size: 0.9em;
+  background: var(--lift);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+.card-body .cloze {
+  color: #7cc4ff;
+  font-weight: 600;
+}
+.card-body .card-img {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  margin: 8px auto;
+  border-radius: 4px;
+}
+.card-body sup, .card-body sub { font-size: 0.7em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up, .live-dot { animation: none; }
+}
