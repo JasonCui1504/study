@@ -69,7 +69,7 @@ export default function StudySession({ open, compact = false }: { open: OpenSess
   if (compact) {
     if (!open) {
       return (
-        <button onClick={start} disabled={starting} className="rounded-full border border-accent/70 px-3 py-1 text-xs text-subtle transition-colors hover:bg-accent-dim hover:text-prose">
+        <button onClick={start} disabled={starting} className="whitespace-nowrap rounded-full border border-accent/70 px-3 py-1 text-xs text-subtle transition-colors hover:bg-accent-dim hover:text-prose">
           ▶ Start studying
         </button>
       );

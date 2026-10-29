@@ -1,6 +1,7 @@
 import { createClient, type Client } from "@libsql/client";
 import { mkdirSync } from "fs";
 import { dirname, resolve } from "path";
+import { seedBooks } from "./book-seed";
 import { seedStarterDeck } from "./starter-deck";
 
 // Local dev uses a SQLite file (gitignored). Production points
@@ -127,6 +128,35 @@ const SCHEMA = [
     notes TEXT NOT NULL DEFAULT ''
   )`,
   `CREATE INDEX IF NOT EXISTS sessions_date ON sessions (local_date)`,
+  // Review books (e.g. the Princeton Review series) → chapters → sections, each
+  // with a status: not_started, learning or mastered (see lib/books.ts).
+  `CREATE TABLE IF NOT EXISTS books (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    section TEXT NOT NULL DEFAULT '',
+    sort INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS chapters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    number TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'not_started',
+    notes TEXT NOT NULL DEFAULT '',
+    sort INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS chapters_book ON chapters (book_id)`,
+  `CREATE TABLE IF NOT EXISTS book_sections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chapter_id INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+    number TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'not_started',
+    sort INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS book_sections_chapter ON book_sections (chapter_id)`,
 ];
 
 let ready: Promise<Client> | null = null;
@@ -138,6 +168,7 @@ async function init(): Promise<Client> {
   await client.execute("PRAGMA foreign_keys = ON");
   await client.batch(SCHEMA, "write");
   await seedStarterDeck(client);
+  await seedBooks(client);
   return client;
 }
 

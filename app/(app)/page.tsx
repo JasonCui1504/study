@@ -4,6 +4,8 @@ import RebuildPlan from "../components/RebuildPlan";
 import StudySession from "../components/StudySession";
 import TaskList from "../components/TaskList";
 import WeeklyHours from "../components/WeeklyHours";
+import BookBar from "../components/BookBar";
+import { bookProgress } from "../../lib/books";
 import { all, one } from "../../lib/db";
 import { getOpenSession } from "../../lib/open-session";
 import { TOPICS } from "../../lib/outline";
@@ -40,7 +42,7 @@ function Change({ now, before }: { now: number; before: number }) {
 export default async function Dashboard() {
   const settings = await getSettings();
   const t = today(settings);
-  const [tr, cards, retention, todays, missed, open, ratings, lastExam] = await Promise.all([
+  const [tr, cards, retention, todays, missed, open, ratings, lastExam, books] = await Promise.all([
     trends(settings),
     cardCounts(settings),
     retention30(settings),
@@ -51,7 +53,10 @@ export default async function Dashboard() {
     one<{ name: string; date: string; cp: number | null; cars: number | null; bb: number | null; ps: number | null }>(
       "SELECT * FROM exams WHERE kind = 'full_length' ORDER BY date DESC, id DESC LIMIT 1"
     ),
+    bookProgress(),
   ]);
+  const bookChapters = books.reduce((a, b) => a + Number(b.total), 0);
+  const bookMastered = books.reduce((a, b) => a + Number(b.mastered), 0);
   const countdown = settings.exam_date ? daysBetween(t, settings.exam_date) : null;
   const plannedToday = todays.filter((x) => x.kind !== "exam" && x.kind !== "rest").reduce((a, x) => a + x.duration_min, 0);
   const doneToday = todays.filter((x) => x.done).length;
@@ -221,6 +226,42 @@ export default async function Dashboard() {
               </p>
             )}
           </section>
+
+          {books.length > 0 && (
+            <section className={panelCls}>
+              <div className="flex items-center">
+                <h2 className="text-base font-medium text-prose">Books</h2>
+                <span className="ml-2 text-xs text-faint">{bookChapters ? `${bookMastered}/${bookChapters} chapters mastered` : ""}</span>
+                <Link href="/books" className="ml-auto text-xs text-faint hover:text-prose">
+                  All books →
+                </Link>
+              </div>
+              {bookChapters ? (
+                <ul className="mt-3 space-y-2.5">
+                  {books.map((b) => (
+                    <li key={b.id}>
+                      <Link href={`/books?book=${b.id}`} className="group block">
+                        <div className="flex items-baseline gap-2 text-xs">
+                          <span className="truncate text-subtle group-hover:text-prose">{b.title.replace(/^MCAT /, "").replace(/ Review$/, "")}</span>
+                          <span className="ml-auto shrink-0 tabular-nums text-faint">
+                            {b.mastered}/{b.total}
+                          </span>
+                        </div>
+                        <BookBar total={Number(b.total)} mastered={Number(b.mastered)} learning={Number(b.learning)} className="mt-1" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-faint">
+                  <Link href="/books" className="underline hover:text-prose">
+                    Add your books&apos; chapters
+                  </Link>{" "}
+                  to track them here.
+                </p>
+              )}
+            </section>
+          )}
         </div>
       </div>
 

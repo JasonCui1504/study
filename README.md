@@ -21,6 +21,10 @@ A personal MCAT study tool built with the same stack and look as the photography
   days. Daily flashcards and CARS run throughout. Month, week (hourly, drag to move or resize) and agenda views.
   "Rebuild plan" redistributes missed tasks and keeps finished work and anything you moved by hand.
   Subscribable `.ics` feed for Google/Apple Calendar.
+- **Books.** The 7 Princeton Review MCAT books, plus any you add, each broken into chapters and sections. Paste a
+  table of contents (`Chapter 3: Enzymes`, `3.2 Kinetics`, indented lines) or add them one at a time. Mark each
+  chapter or section *Haven't started*, *Still learning* or *Mastered*; mastered ones are crossed off. Sections roll
+  up into their chapter, so mastering every section masters the chapter. Progress shows on the dashboard.
 - **Outline.** The AAMC content outline (144 science topics plus CARS skills) with 1–5 confidence ratings and
   "content reviewed" ticks. These drive the planner.
 - **Exams.** Full-length and section-bank scores (118–132 per section, 472–528 total) with trend charts.
