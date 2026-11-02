@@ -1,4 +1,4 @@
-import { createHmac, scryptSync, timingSafeEqual } from "crypto";
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { NextRequest } from "next/server";
 import { getDb } from "./db";
 
@@ -89,6 +89,39 @@ export function sessionCookieHeader(token: string): string {
 
 export function clearCookieHeader(): string {
   return `${STUDY_COOKIE}=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`;
+}
+
+// ─── First-run setup ────────────────────────────────────────────
+// With STUDY_SETUP_CODE set and no login stored yet, the sign-in page offers
+// to create the first account (see app/api/setup). The code keeps anyone who
+// finds the site first from claiming it; once an account exists, setup is off.
+
+/** Whether the first-run setup is open: a setup code is configured and no login exists yet. */
+export async function setupAvailable(): Promise<boolean> {
+  if (!process.env.STUDY_SETUP_CODE || Object.keys(envUsers()).length) return false;
+  const db = await getDb();
+  const rs = await db.execute("SELECT 1 FROM study_users LIMIT 1");
+  return rs.rows.length === 0;
+}
+
+export function validSetupCode(code: string): boolean {
+  const expected = process.env.STUDY_SETUP_CODE;
+  if (!expected) return false;
+  // Compare digests so the check takes the same time whatever the input's length.
+  const digest = (v: string) => createHash("sha256").update(v).digest("hex");
+  return safeEqual(digest(code.trim()), digest(expected.trim()));
+}
+
+/** Stores the first login, only if none exists yet (so two racing setups can't both win). */
+export async function createFirstUser(username: string, password: string): Promise<boolean> {
+  const salt = randomBytes(16).toString("hex");
+  const hash = `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
+  const db = await getDb();
+  const rs = await db.execute({
+    sql: "INSERT INTO study_users (username, hash) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM study_users)",
+    args: [username, hash],
+  });
+  return rs.rowsAffected === 1;
 }
 
 /** For API routes: the username, or null. */

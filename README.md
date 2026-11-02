@@ -50,8 +50,12 @@ npm run dev
    - `STUDY_DATABASE_AUTH_TOKEN`: the token
    - `STUDY_SESSION_SECRET`: a long random string (`openssl rand -hex 32`). Changing it signs everyone out and
      breaks calendar subscriptions.
-3. **Login.** Put the two database variables in `.env.prod` (gitignored) and run
-   `node scripts/set-password.mjs jason --env .env.prod`. It takes effect immediately.
+3. **Login.** Either:
+   - **In the browser:** also set `STUDY_SETUP_CODE` in Vercel (any phrase only you know). Until an account exists,
+     the sign-in page offers "Create your account"; enter the code and choose a username and password. Setup closes
+     for good once the account exists, and stays off entirely if `STUDY_SETUP_CODE` isn't set.
+   - **From a terminal:** put the two database variables in `.env.prod` (gitignored) and run
+     `node scripts/set-password.mjs jason --env .env.prod`. This is also how to change the password later.
 4. **Domain.** In the Vercel project, open Settings → Domains and add `study.jascui.com`. Then add the DNS record
    Vercel shows (usually a `CNAME` from `study` to `cname.vercel-dns.com`) at your DNS provider for jascui.com.
 
