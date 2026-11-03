@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: { default: "MCAT Study", template: "%s · MCAT Study" },
   description: "Flashcards, study plan and progress tracking for the MCAT.",
   robots: { index: false, follow: false },
+  appleWebApp: { capable: true, title: "MCAT", statusBarStyle: "black" },
 };
 
 export const viewport: Viewport = {
