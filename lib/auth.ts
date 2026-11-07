@@ -96,12 +96,43 @@ export function clearCookieHeader(): string {
 // to create the first account (see app/api/setup). The code keeps anyone who
 // finds the site first from claiming it; once an account exists, setup is off.
 
+export type SetupState =
+  | { state: "open" | "has_account" | "no_code" | "no_secret" }
+  | { state: "db_error"; detail: string };
+
+/**
+ * Where first-run setup stands. Before an account exists, the sign-in page
+ * shows this so a misconfigured deploy says what's wrong instead of just
+ * showing a sign-in form nobody can use.
+ */
+export async function setupState(): Promise<SetupState> {
+  if (Object.keys(envUsers()).length) return { state: "has_account" };
+  if (!process.env.STUDY_DATABASE_URL && process.env.VERCEL) {
+    return { state: "db_error", detail: "STUDY_DATABASE_URL isn't set for this deployment." };
+  }
+  try {
+    const db = await getDb();
+    const rs = await db.execute("SELECT 1 FROM study_users LIMIT 1");
+    if (rs.rows.length) return { state: "has_account" };
+  } catch (err) {
+    console.error("Study setup: database check failed", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    // Name the likely cause without echoing the URL or token.
+    const detail = /401|403|unauthori[sz]ed|forbidden|jwt|token/i.test(msg)
+      ? "The database rejected the token. Check STUDY_DATABASE_AUTH_TOKEN (a read & write token for this database)."
+      : /url|scheme|invalid|ENOTFOUND|getaddrinfo|404/i.test(msg)
+        ? "The database address didn't work. Check STUDY_DATABASE_URL (it starts with libsql://)."
+        : "Couldn't reach the database. Check STUDY_DATABASE_URL and STUDY_DATABASE_AUTH_TOKEN.";
+    return { state: "db_error", detail };
+  }
+  if (!secret()) return { state: "no_secret" };
+  if (!process.env.STUDY_SETUP_CODE) return { state: "no_code" };
+  return { state: "open" };
+}
+
 /** Whether the first-run setup is open: a setup code is configured and no login exists yet. */
 export async function setupAvailable(): Promise<boolean> {
-  if (!process.env.STUDY_SETUP_CODE || Object.keys(envUsers()).length) return false;
-  const db = await getDb();
-  const rs = await db.execute("SELECT 1 FROM study_users LIMIT 1");
-  return rs.rows.length === 0;
+  return (await setupState()).state === "open";
 }
 
 export function validSetupCode(code: string): boolean {
